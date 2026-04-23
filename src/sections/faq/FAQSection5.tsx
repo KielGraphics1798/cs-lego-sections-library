@@ -1,5 +1,5 @@
 ﻿import type { JSX } from "react";
 
 export default function FAQSection5(): JSX.Element {
-  return <section>FAQSection5</section>;
+  return <section className="w-full bg-white">FAQSection5</section>;
 }

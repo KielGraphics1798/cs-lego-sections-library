@@ -7,3 +7,15 @@ body,
   padding: 0;
   width: 100%;
 }
+
+/* Section library: h1–h3 use neutral letter-spacing and kerning (overrides Figma/tailwind tracking on headings). */
+#root section h1,
+#root section h2,
+#root section h3 {
+  letter-spacing: 0 !important;
+  font-kerning: normal;
+}
+
+#root section p {
+  letter-spacing: normal;
+}
