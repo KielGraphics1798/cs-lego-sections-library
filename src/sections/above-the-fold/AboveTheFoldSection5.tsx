@@ -1,5 +1,8 @@
-import { useState, type JSX } from "react";
+﻿import { useState, type JSX } from "react";
 
+/**
+ * Hero variant 5. Uses `useState` for mobile nav; in **Next.js App Router** add `"use client"`.
+ */
 export interface AboveTheFoldSection5Props {
   title?: string;
   subtitle?: string;
@@ -156,7 +159,12 @@ export default function AboveTheFoldSection5({
                 </div>
                 <div className="space-y-2">
                   {navItems.map((item) => (
-                    <a className="block text-[14px] font-medium" href={item.href} key={item.label}>
+                    <a
+                      className="block text-[14px] font-medium"
+                      href={item.href}
+                      key={item.label}
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
                       {item.label}
                     </a>
                   ))}

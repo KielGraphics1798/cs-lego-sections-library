@@ -4,3 +4,15 @@ export { default as AboveTheFoldSection3 } from "./AboveTheFoldSection3";
 export { default as AboveTheFoldSection4 } from "./AboveTheFoldSection4";
 export { default as AboveTheFoldSection5 } from "./AboveTheFoldSection5";
 
+export {
+  ABOVE_THE_FOLD_DEFAULT_EBOOK_IMAGE,
+  AboveTheFoldFreeGuideBookDesktop,
+  AboveTheFoldFreeGuideBookMobile,
+  FreeGuideEbookFigure,
+} from "./AboveTheFoldFreeGuideBook";
+export type {
+  AboveTheFoldFreeGuideBookBaseProps,
+  AboveTheFoldFreeGuideBookDesktopProps,
+  AboveTheFoldFreeGuideBookMobileProps,
+} from "./AboveTheFoldFreeGuideBook";
+

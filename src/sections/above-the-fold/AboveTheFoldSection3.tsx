@@ -1,5 +1,8 @@
-import { useState, type JSX } from "react";
+﻿import { useState, type JSX } from "react";
 
+/**
+ * Hero variant 3. Uses `useState` for nav; in **Next.js App Router** add `"use client"`.
+ */
 export interface AboveTheFoldSection3Props {
   title?: string;
   subtitle?: string;
@@ -136,7 +139,12 @@ export default function AboveTheFoldSection3({
                     {hasDropdown && isOpen ? (
                       <div className="absolute left-0 top-[44px] z-40 min-w-[200px] rounded-[3px] border border-white/10 bg-[#1c1c1c] p-2 shadow-xl">
                         {item.links?.map((link) => (
-                          <a className="block rounded px-3 py-2 text-[13px] text-white hover:bg-white/10" href={link.href} key={link.label}>
+                          <a
+                            className="block rounded px-3 py-2 text-[13px] text-white hover:bg-white/10"
+                            href={link.href}
+                            key={link.label}
+                            onClick={() => setDesktopMenu(null)}
+                          >
                             {link.label}
                           </a>
                         ))}
@@ -162,7 +170,10 @@ export default function AboveTheFoldSection3({
                 aria-expanded={mobileMenuOpen}
                 aria-label="Toggle mobile navigation"
                 className="grid h-9 w-9 place-items-center rounded border border-white/20 text-white"
-                onClick={() => setMobileMenuOpen((value) => !value)}
+                onClick={() => {
+                  setMobileMenuOpen((value) => !value);
+                  setMobileDropdown(null);
+                }}
                 type="button"
               >
                 <Burger open={mobileMenuOpen} />
@@ -198,7 +209,15 @@ export default function AboveTheFoldSection3({
                     {hasDropdown && isOpen ? (
                       <div className="mt-2 space-y-2">
                         {item.links?.map((link) => (
-                          <a className="block text-[13px] text-white/80" href={link.href} key={link.label}>
+                          <a
+                            className="block text-[13px] text-white/80"
+                            href={link.href}
+                            key={link.label}
+                            onClick={() => {
+                              setMobileMenuOpen(false);
+                              setMobileDropdown(null);
+                            }}
+                          >
                             {link.label}
                           </a>
                         ))}
