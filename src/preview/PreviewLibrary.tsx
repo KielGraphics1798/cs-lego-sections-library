@@ -90,8 +90,24 @@ import {
   FooterSection4,
   FooterSection5,
 } from "../sections/footer";
+import {
+  Homepage1,
+  Homepage2,
+  Homepage3,
+  Homepage4,
+  Homepage5,
+} from "../homepages";
+import PreviewHomepages from "./PreviewHomepages";
 
 type SectionComponent = () => JSX.Element;
+
+const homepageComponents: SectionComponent[] = [
+  Homepage1,
+  Homepage2,
+  Homepage3,
+  Homepage4,
+  Homepage5,
+];
 
 const sectionComponents = {
   "above-the-fold": [
@@ -179,21 +195,52 @@ function isCategoryKey(value: string | null): value is CategoryKey {
   return value != null && value in sectionComponents;
 }
 
-function readBareParams(): { category: CategoryKey; variant: number } | null {
+type BareParams =
+  | { kind: "section"; category: CategoryKey; variant: number }
+  | { kind: "homepage"; index: number };
+
+function readBareParams(): BareParams | null {
   if (typeof window === "undefined") return null;
   const params = new URLSearchParams(window.location.search);
   if (params.get("bare") !== "1") return null;
+
+  const hpRaw = params.get("hp");
+  if (hpRaw != null) {
+    const parsed = Number.parseInt(hpRaw, 10);
+    if (Number.isNaN(parsed)) return null;
+    // Accept 1-based (?hp=1) or 0-based (?hp=0) — clamp to range.
+    const oneBased = parsed >= 1 && parsed <= homepageComponents.length;
+    const index = oneBased ? parsed - 1 : Math.max(0, Math.min(parsed, homepageComponents.length - 1));
+    return { kind: "homepage", index };
+  }
+
   const cat = params.get("cat");
   const variant = Number.parseInt(params.get("v") ?? "0", 10);
   if (!isCategoryKey(cat)) return null;
   if (Number.isNaN(variant)) return null;
-  return { category: cat, variant };
+  return { kind: "section", category: cat, variant };
+}
+
+type ViewMode = "sections" | "homepages";
+
+function readViewMode(): ViewMode {
+  if (typeof window === "undefined") return "sections";
+  const params = new URLSearchParams(window.location.search);
+  return params.get("view") === "homepages" ? "homepages" : "sections";
 }
 
 export default function PreviewLibrary(): JSX.Element {
   const bare = useMemo(readBareParams, []);
 
   if (bare) {
+    if (bare.kind === "homepage") {
+      const Homepage = homepageComponents[bare.index] ?? homepageComponents[0];
+      return (
+        <div className="w-full">
+          <Homepage />
+        </div>
+      );
+    }
     const variants = sectionComponents[bare.category];
     const Component = variants[bare.variant] ?? variants[0];
     return (
@@ -207,9 +254,24 @@ export default function PreviewLibrary(): JSX.Element {
 }
 
 function PreviewLibraryShell(): JSX.Element {
+  const [view, setView] = useState<ViewMode>(readViewMode);
   const [activeCategory, setActiveCategory] = useState<CategoryKey>(sectionCategories[0].key);
   const [activeVariant, setActiveVariant] = useState(0);
   const [viewport, setViewport] = useState<ViewportMode>("fluid");
+
+  // Persist `?view=homepages` in the URL so reloads / shared links stay on the same mode.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    if (view === "homepages") {
+      params.set("view", "homepages");
+    } else {
+      params.delete("view");
+    }
+    const qs = params.toString();
+    const next = `${window.location.pathname}${qs ? `?${qs}` : ""}`;
+    window.history.replaceState({}, "", next);
+  }, [view]);
 
   const CurrentSection = useMemo(() => {
     const variants = sectionComponents[activeCategory] ?? [];
@@ -226,23 +288,36 @@ function PreviewLibraryShell(): JSX.Element {
       <header className="sticky top-0 z-30 border-b border-[#e3e3e3] bg-white/95 px-4 py-4 backdrop-blur-md shadow-[0px_4px_14px_rgba(0,0,0,0.04)]">
         <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-3">
           <div className="flex items-center justify-between gap-3">
-            <div>
-              <h1 className="text-[18px] font-semibold tracking-[-0.3px]">Section Library Preview</h1>
-              <p className="mt-0.5 text-[12px] text-[#5a5a5a]">
-                Pick a category &amp; variant, then choose a viewport to preview at real screen width.
-              </p>
+            <div className="flex items-center gap-3">
+              <div>
+                <h1 className="text-[18px] font-semibold tracking-[-0.3px]">
+                  {view === "homepages" ? "Homepage Library Preview" : "Section Library Preview"}
+                </h1>
+                <p className="mt-0.5 text-[12px] text-[#5a5a5a]">
+                  {view === "homepages"
+                    ? "Pick a homepage variation, then choose a viewport to preview at real screen width."
+                    : "Pick a category & variant, then choose a viewport to preview at real screen width."}
+                </p>
+              </div>
             </div>
-            <a
-              className="hidden shrink-0 items-center gap-1 rounded-[8px] border border-[#dedede] bg-white px-3 py-1.5 text-[12px] font-medium text-[#2b2b2b] hover:border-[#141414] hover:text-[#141414] sm:inline-flex"
-              href={bareUrl}
-              target="_blank"
-              rel="noreferrer"
-              title="Open this section bare in a new tab — uses the actual browser viewport width."
-            >
-              Open in new tab ↗
-            </a>
+            <div className="flex items-center gap-2">
+              <ModeToggle view={view} setView={setView} />
+              {view === "sections" ? (
+                <a
+                  className="hidden shrink-0 items-center gap-1 rounded-[8px] border border-[#dedede] bg-white px-3 py-1.5 text-[12px] font-medium text-[#2b2b2b] hover:border-[#141414] hover:text-[#141414] sm:inline-flex"
+                  href={bareUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  title="Open this section bare in a new tab — uses the actual browser viewport width."
+                >
+                  Open in new tab ↗
+                </a>
+              ) : null}
+            </div>
           </div>
 
+          {view === "sections" ? (
+          <>
           <div className="flex flex-wrap gap-2">
             {sectionCategories.map((category) => {
               const isActive = activeCategory === category.key;
@@ -314,12 +389,52 @@ function PreviewLibraryShell(): JSX.Element {
               );
             })}
           </div>
+          </>
+          ) : null}
         </div>
       </header>
 
       <main className="w-full">
-        <Stage viewport={viewport} bareUrl={bareUrl} CurrentSection={CurrentSection} />
+        {view === "sections" ? (
+          <Stage viewport={viewport} bareUrl={bareUrl} CurrentSection={CurrentSection} />
+        ) : (
+          <PreviewHomepages />
+        )}
       </main>
+    </div>
+  );
+}
+
+function ModeToggle({
+  view,
+  setView,
+}: {
+  view: ViewMode;
+  setView: (next: ViewMode) => void;
+}): JSX.Element {
+  const options: { value: ViewMode; label: string }[] = [
+    { value: "sections", label: "Sections" },
+    { value: "homepages", label: "Homepages" },
+  ];
+  return (
+    <div className="inline-flex shrink-0 rounded-[10px] border border-[#dedede] bg-white p-[3px] shadow-[0px_2px_6px_rgba(0,0,0,0.04)]">
+      {options.map((opt) => {
+        const isActive = view === opt.value;
+        return (
+          <button
+            key={opt.value}
+            type="button"
+            onClick={() => setView(opt.value)}
+            className={`rounded-[7px] px-3 py-1 text-[12.5px] font-semibold transition ${
+              isActive
+                ? "bg-[#141414] text-white shadow-[0px_2px_6px_rgba(0,0,0,0.18)]"
+                : "text-[#3a3a3a] hover:text-[#141414]"
+            }`}
+          >
+            {opt.label}
+          </button>
+        );
+      })}
     </div>
   );
 }
