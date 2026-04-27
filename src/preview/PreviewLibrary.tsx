@@ -98,6 +98,7 @@ import {
   Homepage5,
 } from "../homepages";
 import PreviewHomepages from "./PreviewHomepages";
+import PreviewGallery from "./PreviewGallery";
 
 type SectionComponent = () => JSX.Element;
 
@@ -221,12 +222,15 @@ function readBareParams(): BareParams | null {
   return { kind: "section", category: cat, variant };
 }
 
-type ViewMode = "sections" | "homepages";
+type ViewMode = "gallery" | "sections" | "homepages";
 
 function readViewMode(): ViewMode {
-  if (typeof window === "undefined") return "sections";
+  if (typeof window === "undefined") return "gallery";
   const params = new URLSearchParams(window.location.search);
-  return params.get("view") === "homepages" ? "homepages" : "sections";
+  const raw = params.get("view");
+  if (raw === "homepages") return "homepages";
+  if (raw === "sections") return "sections";
+  return "gallery";
 }
 
 export default function PreviewLibrary(): JSX.Element {
@@ -259,14 +263,15 @@ function PreviewLibraryShell(): JSX.Element {
   const [activeVariant, setActiveVariant] = useState(0);
   const [viewport, setViewport] = useState<ViewportMode>("fluid");
 
-  // Persist `?view=homepages` in the URL so reloads / shared links stay on the same mode.
+  // Persist `?view=…` in the URL so reloads / shared links stay on the same mode.
+  // `gallery` is the default and stays implicit (no `view` param).
   useEffect(() => {
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
-    if (view === "homepages") {
-      params.set("view", "homepages");
-    } else {
+    if (view === "gallery") {
       params.delete("view");
+    } else {
+      params.set("view", view);
     }
     const qs = params.toString();
     const next = `${window.location.pathname}${qs ? `?${qs}` : ""}`;
@@ -291,12 +296,18 @@ function PreviewLibraryShell(): JSX.Element {
             <div className="flex items-center gap-3">
               <div>
                 <h1 className="text-[18px] font-semibold tracking-[-0.3px]">
-                  {view === "homepages" ? "Homepage Library Preview" : "Section Library Preview"}
+                  {view === "homepages"
+                    ? "Homepage Library Preview"
+                    : view === "gallery"
+                      ? "Component Library"
+                      : "Section Library Preview"}
                 </h1>
                 <p className="mt-0.5 text-[12px] text-[#5a5a5a]">
                   {view === "homepages"
                     ? "Pick a homepage variation, then choose a viewport to preview at real screen width."
-                    : "Pick a category & variant, then choose a viewport to preview at real screen width."}
+                    : view === "gallery"
+                      ? "Browse, search, and filter every section variant. Click a card to open the full preview."
+                      : "Pick a category & variant, then choose a viewport to preview at real screen width."}
                 </p>
               </div>
             </div>
@@ -395,7 +406,9 @@ function PreviewLibraryShell(): JSX.Element {
       </header>
 
       <main className="w-full">
-        {view === "sections" ? (
+        {view === "gallery" ? (
+          <PreviewGallery />
+        ) : view === "sections" ? (
           <Stage viewport={viewport} bareUrl={bareUrl} CurrentSection={CurrentSection} />
         ) : (
           <PreviewHomepages />
@@ -413,6 +426,7 @@ function ModeToggle({
   setView: (next: ViewMode) => void;
 }): JSX.Element {
   const options: { value: ViewMode; label: string }[] = [
+    { value: "gallery", label: "Gallery" },
     { value: "sections", label: "Sections" },
     { value: "homepages", label: "Homepages" },
   ];
