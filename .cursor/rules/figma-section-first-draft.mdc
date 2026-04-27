@@ -1,0 +1,60 @@
+---
+description: Figma-to-React section builds — first draft must use flow-based layout, safe typography, and responsive spacing (no polish pass assumed).
+alwaysApply: true
+---
+
+# Figma section — first draft quality bar
+
+When building or rebuilding a section from **Figma** in this repo (`src/sections/**`), **treat the first implementation as final for layout behavior**: no overlapping text, no fixed “artboard only” assumptions, mobile/tablet usable.
+
+## Layout (non-negotiable)
+
+- Use **document flow** for **headings, body copy, lists, CTAs**: `flex` / `grid`, **`gap`**, natural stacking.
+- **Do not** use `position: absolute` (or Figma `top` / `left`) to place **text siblings** relative to each other. That breaks when the title wraps to an extra line, zoom changes, or width is not 1440px.
+- Reserve **absolute** for **backgrounds / decoration / images** that must not affect text flow—or isolate them so wrapping **never** collides with copy.
+
+```mermaid
+flowchart TD
+  figmaFrame[Figma_frame]
+  flowStack[flow_stack_flex_or_grid]
+  noTextAbs[no_absolute_sibling_text]
+  decOnly[absolutes_decoration_only]
+  figmaFrame --> flowStack
+  flowStack --> noTextAbs
+  noTextAbs --> decOnly
+```
+
+## Figma → code workflow
+
+- Use **Figma MCP**: `get_metadata` (frame size, structure) + `get_design_context` (assets, copy).
+- Map the frame to **one column or a clear grid**; vertical groups in Figma become **`flex-col` + `gap` / margin chain**, not independent `top` positions for stacked text.
+
+## Spacing
+
+- Prefer **`gap`** on flex/grid, **padding** on a **single outer wrapper** (`px-4 sm:px-6 md:px-10` + section `py-*`), and **`max-w-*` + `mx-auto`** for centered content.
+- Avoid overlapping layers that only look right at one viewport width.
+
+## Typography
+
+- **Display headings**: safe **line-height** (e.g. ≥ 1.15–1.2 for large multi-line titles). Use **`clamp()`** where this repo already does for fluid headers.
+- **Body**: sensible **`max-w-*`** (ch or rem) for line length.
+- **Title `max-width`**: do not set it so narrow that it **forces extra line breaks** vs the design (e.g. two-line hero should not become three lines only because of `max-w`).
+
+## Responsiveness
+
+- Below desktop, provide an explicit **stacked** path (`xl` / `lg` per project convention) with **comfortable padding** and touch-friendly controls.
+- Avoid **side-by-side** columns at widths where the design would **crowd**, unless Figma documents that breakpoint.
+- Sanity-check mentally at **375, 768, 1280, 1440** (or the preview iframe presets in `src/preview/PreviewLibrary.tsx` / gallery).
+
+## Assets
+
+- Prefer **local** `src/assets/**` when the project already does; Figma **MCP asset URLs expire** (short-lived).
+
+## Before marking the task done (self-check)
+
+- [ ] **No text overlap** at **~1280px** and a **narrower** width.
+- [ ] **Title and body** are separate blocks in **flow**, not absolutes fighting each other.
+- [ ] **Mobile**: horizontal **padding** and a **clear vertical gap** between title and body.
+- [ ] **Zoom / wrap**: extra title line does not cover the next section.
+
+**Optional:** If this rule is too broad for non-Figma work, set `alwaysApply: false` and add `globs: src/sections/**/*.tsx` in this file’s frontmatter.
